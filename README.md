@@ -1,70 +1,171 @@
-# Getting Started with Create React App
+# 🧠 F50HACK - OSINT Dashboard
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Uma ferramenta avançada de **Open Source Intelligence (OSINT)** desenvolvida em React, com interface moderna e funcionalidades reais de análise de dados públicos.
 
-## Available Scripts
+## 🎯 **Funcionalidades Implementadas**
 
-In the project directory, you can run:
+### 🔍 **Dashboard Principal**
+- Busca por usernames com simulação de análise OSINT
+- Exibição de perfil com dados mockados
+- Gráfico de atividade por horário
+- Mapa de geolocalização interativo
 
-### `npm start`
+### 🌐 **Domain Analysis**
+- Análise real de domínios usando API pública (ipapi.co)
+- Geolocalização de IPs
+- Informações de ISP e ASN
+- Detecção de localização geográfica
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 📧 **Email Finder**
+- Busca de emails por nome e domínio
+- Simulação de diferentes padrões de email
+- Indicadores de confiança e verificação
+- Sugestões de fontes de dados
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 📱 **Phone Lookup**
+- Análise de números de telefone brasileiros
+- Detecção automática de DDD
+- Identificação de operadora por região
+- Verificação de validade
+- **Suporte a 50+ países** incluindo:
+  - 🇧🇷 **Brasil** (+55) - Operadoras: Vivo, Claro, TIM, Oi, etc.
+  - 🇮🇳 **Índia** (+91) - Operadoras: Airtel, Vodafone, Jio, etc.
+  - 🇦🇴 **Angola** (+244) - Operadoras: Unitel, Movicel
+  - 🇺🇸 **Estados Unidos/Canadá** (+1)
+  - 🇬🇧 **Reino Unido** (+44)
+  - 🇫🇷 **França** (+33)
+  - 🇩🇪 **Alemanha** (+49)
+  - 🇮🇹 **Itália** (+39)
+  - 🇪🇸 **Espanha** (+34)
+  - E muito mais...
 
-### `npm test`
+#### Funcionalidades do Phone Lookup:
+- ✅ Detecção automática do país pelo código
+- ✅ Identificação da operadora
+- ✅ Localização geográfica específica
+- ✅ Informações do proprietário (estilo Truecaller)
+- ✅ Tipo de proprietário (Pessoa Física/Empresa)
+- ✅ Fuso horário
+- ✅ Avaliação de risco
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+#### Exemplos de Números Angolanos:
+- `+244921234567` - Unitel, Luanda Centro, João Silva
+- `+244931234567` - Unitel, Luanda Talatona, Maria Santos
+- `+244961234567` - Movicel, Luanda Cazenga, Pedro Oliveira
+- `+244981234567` - Movicel, Benguela Centro, Manuel Rodrigues
 
-### `npm run build`
+### 📄 **Report Exporter**
+- Exportação em formato JSON
+- Geração de relatórios PDF com jsPDF
+- Inclusão de todos os dados coletados
+- Formatação profissional
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## ⚙️ **Tecnologias Utilizadas**
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **Frontend**: React 19.1.0
+- **Styling**: Tailwind CSS 3.4.17
+- **Maps**: React-Leaflet + Leaflet.js
+- **Charts**: Chart.js + react-chartjs-2
+- **PDF Generation**: jsPDF + html2canvas
+- **APIs**: ipapi.co (geolocalização)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🚀 **Como Executar**
 
-### `npm run eject`
+### Pré-requisitos
+- Node.js (versão 16 ou superior)
+- npm ou yarn
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Instalação
+```bash
+# Clone o repositório
+git clone <repository-url>
+cd instahack-osint
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# Instale as dependências
+npm install
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Execute o projeto
+npm start
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+O projeto estará disponível em `http://localhost:3000`
 
-## Learn More
+## 📁 **Estrutura do Projeto**
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
+src/
+├── App.js                 # Componente principal
+├── components/
+│   ├── Sidebar.jsx        # Menu de navegação
+│   ├── ProfileCard.jsx    # Card de perfil do usuário
+│   ├── GeoMap.jsx         # Mapa interativo
+│   ├── ActivityChart.jsx  # Gráfico de atividade
+│   ├── DomainAnalysis.jsx # Análise de domínios
+│   ├── EmailFinder.jsx    # Busca de emails
+│   ├── PhoneLookup.jsx    # Análise de telefones
+│   └── ReportExporter.jsx # Exportação de relatórios
+└── assets/
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🔧 **Funcionalidades por Seção**
 
-### Code Splitting
+### Dashboard
+- Busca por username
+- Visualização de perfil simulado
+- Gráfico de atividade temporal
+- Mapa com localizações
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Domain Analysis
+- Input para domínio
+- Geolocalização real via API
+- Informações de rede e ISP
+- Coordenadas geográficas
 
-### Analyzing the Bundle Size
+### Email Finder
+- Busca por nome e domínio
+- Múltiplos padrões de email
+- Indicadores de confiança
+- Fontes de dados
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Phone Lookup
+- Análise de números brasileiros
+- Detecção de DDD e operadora
+- Informações de localização
+- Verificação de validade
 
-### Making a Progressive Web App
+## 📊 **APIs Utilizadas**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+- **ipapi.co**: Geolocalização de IPs e domínios
+- **Mock APIs**: Simulação de dados para demonstração
 
-### Advanced Configuration
+## 🔮 **Funcionalidades Futuras**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- [ ] Integração com Instagram Graph API
+- [ ] Scraping real de perfis sociais
+- [ ] Autenticação de usuários
+- [ ] Banco de dados para histórico
+- [ ] Mais APIs de OSINT
+- [ ] Análise de imagens
+- [ ] Detecção de padrões avançados
 
-### Deployment
+## 🛡️ **Considerações de Segurança**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+- Este projeto é para fins educacionais
+- Respeite os termos de serviço das APIs
+- Use apenas dados públicos
+- Não abuse das APIs gratuitas
 
-### `npm run build` fails to minify
+## 📝 **Licença**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Este projeto é desenvolvido para fins educacionais e de demonstração.
+
+## 🤝 **Contribuição**
+
+Contribuições são bem-vindas! Sinta-se à vontade para:
+- Reportar bugs
+- Sugerir novas funcionalidades
+- Enviar pull requests
+
+---
+
+**Desenvolvido com ❤️ para a comunidade OSINT**
