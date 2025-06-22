@@ -120,28 +120,28 @@ O frontend estará disponível em `http://localhost:3000`
 ## 🖼️ Screenshots
 
 ### Dashboard Principal
-![Dashboard Principal](public/Screenshot%202025-06-21%20at%202.58.34%E2%80%AFAM.png)
+![Dashboard Principal](screenshots/Screenshot%202025-06-21%20at%202.58.34%E2%80%AFAM.png)
 
 ### Investigação Instagram OSINT
-![Instagram OSINT](public/Screenshot%202025-06-22%20at%201.18.08%E2%80%AFAM.png)
+![Instagram OSINT](screenshots/Screenshot%202025-06-22%20at%201.18.08%E2%80%AFAM.png)
 
 ### Análise de Perfil e Comentários
-![Análise de Perfil](public/Screenshot%202025-06-22%20at%201.18.51%E2%80%AFAM.png)
+![Análise de Perfil](screenshots/Screenshot%202025-06-22%20at%201.18.51%E2%80%AFAM.png)
 
 ### Detecção de Comentários Ofensivos
-![Comentários Ofensivos](public/Screenshot%202025-06-22%20at%201.21.14%E2%80%AFAM.png)
+![Comentários Ofensivos](screenshots/Screenshot%202025-06-22%20at%201.21.14%E2%80%AFAM.png)
 
 ### Relatório e Seguidores Recentes
-![Relatório e Seguidores](public/Screenshot%202025-06-22%20at%202.21.59%E2%80%AFAM.png)
+![Relatório e Seguidores](screenshots/Screenshot%202025-06-22%20at%202.21.59%E2%80%AFAM.png)
 
 ### Mapa e Atividades
-![Mapa e Atividades](public/Screenshot%202025-06-22%20at%202.22.04%E2%80%AFAM.png)
+![Mapa e Atividades](screenshots/Screenshot%202025-06-22%20at%202.22.04%E2%80%AFAM.png)
 
 ### Exportação de Relatórios
-![Exportação de Relatórios](public/Screenshot%202025-06-22%20at%202.22.08%E2%80%AFAM.png)
+![Exportação de Relatórios](screenshots/Screenshot%202025-06-22%20at%202.22.08%E2%80%AFAM.png)
 
 ### Gráficos de Engajamento
-![Gráficos de Engajamento](public/Screenshot%202025-06-22%20at%202.35.07%E2%80%AFAM.png)
+![Gráficos de Engajamento](screenshots/Screenshot%202025-06-22%20at%202.35.07%E2%80%AFAM.png)
 
 ## 📁 Estrutura do Projeto
 
