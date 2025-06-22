@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-
-const IMAGE_URL = "./welcome-user.png"; // Salve a imagem no public/ ou assets/ e ajuste o caminho
+import profileImage from "../Profile (1).png";
 
 const WelcomePop = () => {
   const [show, setShow] = useState(false);
@@ -24,7 +23,7 @@ const WelcomePop = () => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl rounded-2xl p-6 sm:p-8 max-w-xs w-full flex flex-col items-center relative">
         <button className="absolute top-2 right-2 text-white/80 hover:text-orange-400 text-2xl" onClick={() => setShow(false)} aria-label="Fechar">×</button>
-        <img src={IMAGE_URL} alt="Bem-vindo" className="w-28 h-28 rounded-full object-cover mb-4 border-4 border-white/30 shadow-lg" />
+        <img src={profileImage} alt="Bem-vindo" className="w-28 h-28 rounded-full object-cover mb-4 border-4 border-white/30 shadow-lg" />
         <h2 className="text-lg sm:text-xl font-bold text-white mb-2 text-center">Deja bem-vindo ao <span className="text-orange-400">F50HACK</span></h2>
         <p className="text-white/80 text-center mb-4">Use com responsabilidade.</p>
         <div className="text-xs text-gray-200 text-center mt-2">

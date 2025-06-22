@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Line, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,8 +11,6 @@ import {
   Legend,
   Filler
 } from 'chart.js';
-import MatrixBackground from './MatrixBackground';
-import WelcomePop from './WelcomePop';
 
 ChartJS.register(
   CategoryScale,
@@ -32,7 +29,34 @@ const InstagramInvestigator = () => {
   const [sessionId, setSessionId] = useState('');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [backendStatus, setBackendStatus] = useState('checking');
+
+  // Verificar status do backend
+  useEffect(() => {
+    const checkBackendStatus = async () => {
+      try {
+        console.log('🔍 Verificando status do backend...');
+        const response = await fetch('http://localhost:5001/api/instagram/health');
+        console.log('📡 Resposta do backend:', response.status, response.statusText);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Backend online:', data);
+          setBackendStatus('online');
+        } else {
+          console.log('❌ Backend offline - status:', response.status);
+          setBackendStatus('offline');
+        }
+      } catch (err) {
+        console.log('❌ Erro ao conectar com backend:', err.message);
+        setBackendStatus('offline');
+      }
+    };
+
+    checkBackendStatus();
+    const interval = setInterval(checkBackendStatus, 10000); // Verificar a cada 10 segundos
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Efeito de partículas flutuantes
   useEffect(() => {
@@ -54,13 +78,11 @@ const InstagramInvestigator = () => {
   }, []);
 
   const investigateProfile = async () => {
-    if (!username || !sessionId) {
-      setError('Username e Session ID são obrigatórios');
+    if (!username) {
       return;
     }
 
     setLoading(true);
-    setError('');
 
     try {
       // Tentar usar a API real primeiro
@@ -72,7 +94,7 @@ const InstagramInvestigator = () => {
           },
           body: JSON.stringify({
             username: username,
-            session_id: sessionId
+            session_id: sessionId || null
           })
         });
 
@@ -86,15 +108,22 @@ const InstagramInvestigator = () => {
           } else {
             throw new Error(result.error || 'Erro na API');
           }
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Erro HTTP ${response.status}`);
         }
       } catch (apiError) {
         console.log('API não disponível, usando dados simulados:', apiError.message);
-        setError('API não disponível. Iniciando servidor Python backend...');
+        
+        // Se não tiver session ID, mostrar aviso
+        if (!sessionId) {
+          console.log('⚠️ Para dados reais, forneça um Session ID válido. Usando dados simulados.');
+        } else {
+          console.log(`⚠️ Erro na API: ${apiError.message}. Usando dados simulados.`);
+        }
       }
 
       // Fallback para dados simulados apenas se API falhar
-      setError('⚠️ Usando dados simulados - API não disponível. Para dados reais, inicie o backend Python.');
-      
       const mockData = {
         username: username,
         userID: Math.floor(Math.random() * 1000000000) + 100000000,
@@ -138,7 +167,20 @@ const InstagramInvestigator = () => {
         device_info: generateDeviceInfo(),
         security_info: generateSecurityInfo(),
         is_simulated: true, // Marca como dados simulados
-        analysis_timestamp: new Date().toISOString()
+        analysis_timestamp: new Date().toISOString(),
+        // Novos campos
+        posts: generateMockPosts(username),
+        top_comments: generateMockTopComments(),
+        offensive_comments: generateMockOffensiveComments(),
+        recent_followers: generateMockRecentFollowers(),
+        comment_analysis: {
+          total_comments: 45,
+          positive_comments: 38,
+          negative_comments: 2,
+          neutral_comments: 5,
+          offensive_comments: 3,
+          avg_likes_per_comment: 12.5
+        }
       };
 
       // Simular delay de API
@@ -146,7 +188,7 @@ const InstagramInvestigator = () => {
       
       setResults(mockData);
     } catch (err) {
-      setError('Erro na investigação: ' + err.message);
+      console.error('Erro na investigação: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -172,7 +214,7 @@ const InstagramInvestigator = () => {
       is_whatsapp_linked: user.is_whatsapp_linked || false,
       external_url: user.external_url || null,
       biography: user.biography || '',
-      hd_profile_pic_url_info: user.hd_profile_pic_url_info || { url: '' },
+      hd_profile_pic_url_info: user.hd_profile_pic_url_info || { url: null },
       account_created: user.account_created || null,
       name_changes: user.name_changes || 0,
       associated_phones: user.associated_phones || [],
@@ -186,15 +228,28 @@ const InstagramInvestigator = () => {
       peak_hours: user.peak_hours || [],
       post_frequency: user.post_frequency || '',
       hashtags_used: user.hashtags_used || [],
-      location: user.location || '',
-      timezone: user.timezone || 'GMT',
-      peak_time: user.peak_time || '',
+      location: user.location || null,
+      timezone: user.timezone || 'GMT-3',
+      peak_time: user.peak_time || '2:00 PM - 4:00 PM',
       account_age_days: user.account_age_days || 0,
       name_change_history: user.name_change_history || [],
       device_info: user.device_info || {},
       security_info: user.security_info || {},
-      is_simulated: false, // Marca como dados reais
-      analysis_timestamp: user.analysis_timestamp || new Date().toISOString()
+      is_simulated: user.is_simulated || false,
+      analysis_timestamp: user.analysis_timestamp || new Date().toISOString(),
+      // Novos campos
+      posts: user.posts || [],
+      top_comments: user.top_comments || [],
+      offensive_comments: user.offensive_comments || [],
+      recent_followers: user.recent_followers || [],
+      comment_analysis: user.comment_analysis || {
+        total_comments: 0,
+        positive_comments: 0,
+        negative_comments: 0,
+        neutral_comments: 0,
+        offensive_comments: 0,
+        avg_likes_per_comment: 0
+      }
     };
   };
 
@@ -390,518 +445,476 @@ const InstagramInvestigator = () => {
 
   const generateSecurityInfo = () => {
     return {
-      two_factor_enabled: Math.random() > 0.3,
-      last_password_change: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
-      suspicious_activity: Math.random() > 0.8
+      two_factor_enabled: Math.random() > 0.7,
+      login_activity: [
+        { date: '2024-01-15', location: 'São Paulo, BR', device: 'iPhone 14' },
+        { date: '2024-01-10', location: 'Rio de Janeiro, BR', device: 'MacBook Pro' }
+      ],
+      suspicious_activity: Math.random() > 0.8 ? ['Login from unknown device'] : []
     };
   };
 
-  return (
-    <div className="max-w-7xl mx-auto p-2 sm:p-4 md:p-6 relative min-h-screen bg-[#10151a] overflow-hidden">
-      <MatrixBackground />
-      <WelcomePop />
-      {/* Fundo escuro translúcido, sem gradiente colorido */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-      {/* Partículas flutuantes */}
-      <style jsx>{`
-        .floating-particle {
-          position: fixed;
-          width: 4px;
-          height: 4px;
-          background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
-          border-radius: 50%;
-          pointer-events: none;
-          z-index: 1;
-          animation: float 5s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-          0% {
-            transform: translateY(100vh) rotate(0deg);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(-100px) rotate(360deg);
-            opacity: 0;
-          }
-        }
-        
-        .glow-effect {
-          box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-          transition: all 0.3s ease;
-        }
-        
-        .glow-effect:hover {
-          box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
-          transform: translateY(-2px);
-        }
-        
-        .card-hover {
-          transition: all 0.3s ease;
-          transform: perspective(1000px) rotateX(0deg);
-        }
-        
-        .card-hover:hover {
-          transform: perspective(1000px) rotateX(5deg) translateY(-5px);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
-        
-        .pulse-animation {
-          animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.7;
-          }
-        }
-        
-        .typing-effect {
-          overflow: hidden;
-          border-right: 2px solid #3b82f6;
-          white-space: nowrap;
-          animation: typing 3s steps(40, end), blink-caret 0.75s step-end infinite;
-        }
-        
-        @keyframes typing {
-          from { width: 0; }
-          to { width: 100%; }
-        }
-        
-        @keyframes blink-caret {
-          from, to { border-color: transparent; }
-          50% { border-color: #3b82f6; }
-        }
-      `}</style>
+  const generateMockPosts = (username) => {
+    const posts = [];
+    for (let i = 0; i < 10; i++) {
+      posts.push({
+        id: `post_${Math.floor(Math.random() * 1000000000)}`,
+        caption: `Post #${i + 1} do ${username} 📸 #instagram #vida #feliz`,
+        likes: Math.floor(Math.random() * 5000) + 100,
+        comments: Math.floor(Math.random() * 200) + 10,
+        timestamp: Math.floor((Date.now() - (i * 24 * 60 * 60 * 1000)) / 1000),
+        media_type: 'IMAGE',
+        media_url: `https://via.placeholder.com/400x400/random?text=Post+${i + 1}`,
+        permalink: `https://www.instagram.com/p/post_${Math.floor(Math.random() * 1000000000)}/`
+      });
+    }
+    return posts;
+  };
 
-      <div className="relative z-10">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2 typing-effect">
+  const generateMockTopComments = () => {
+    const comments = [];
+    const commentTexts = [
+      "Muito lindo! 😍", "Adorei! ❤️", "Perfeito! 👏", "Maravilhoso! ✨",
+      "Que foto incrível! 📸", "Amei! 🥰", "Fantástico! 🌟", "Demais! 🔥",
+      "Que legal! 😊", "Incrível! 🤩", "Muito bom! 👍", "Excelente! 💯"
+    ];
+    
+    for (let i = 0; i < 10; i++) {
+      comments.push({
+        id: `comment_${Math.floor(Math.random() * 1000000000)}`,
+        username: `user_${Math.floor(Math.random() * 10000)}`,
+        user_id: Math.floor(Math.random() * 1000000000),
+        full_name: `User ${Math.floor(Math.random() * 10000)}`,
+        comment: commentTexts[Math.floor(Math.random() * commentTexts.length)],
+        likes: Math.floor(Math.random() * 50) + 5,
+        timestamp: Math.floor((Date.now() - (Math.random() * 24 * 60 * 60 * 1000)) / 1000),
+        sentiment: 'positive',
+        post_id: `post_${Math.floor(Math.random() * 1000000000)}`,
+        post_caption: `Post do Instagram #${Math.floor(Math.random() * 10) + 1}`,
+        post_likes: Math.floor(Math.random() * 5000) + 100
+      });
+    }
+    return comments.sort((a, b) => b.likes - a.likes);
+  };
+
+  const generateMockOffensiveComments = () => {
+    const comments = [];
+    const offensiveTexts = [
+      "Que feio! 😒", "Não gostei! 👎", "Péssimo! 😤", "Horrível! 🤮",
+      "Idiota! 🤬", "Burro! 😡", "Estúpido! 😠", "Nojo! 🤢"
+    ];
+    
+    for (let i = 0; i < 3; i++) {
+      comments.push({
+        id: `comment_${Math.floor(Math.random() * 1000000000)}`,
+        username: `troll_${Math.floor(Math.random() * 10000)}`,
+        user_id: Math.floor(Math.random() * 1000000000),
+        full_name: `Troll ${Math.floor(Math.random() * 10000)}`,
+        comment: offensiveTexts[Math.floor(Math.random() * offensiveTexts.length)],
+        likes: Math.floor(Math.random() * 5),
+        timestamp: Math.floor((Date.now() - (Math.random() * 24 * 60 * 60 * 1000)) / 1000),
+        sentiment: 'offensive',
+        post_id: `post_${Math.floor(Math.random() * 1000000000)}`,
+        post_caption: `Post do Instagram #${Math.floor(Math.random() * 10) + 1}`,
+        post_likes: Math.floor(Math.random() * 5000) + 100,
+        is_verified: false
+      });
+    }
+    return comments;
+  };
+
+  const generateMockRecentFollowers = () => {
+    const followers = [];
+    for (let i = 0; i < 10; i++) {
+      followers.push({
+        id: Math.floor(Math.random() * 1000000000),
+        username: `follower_${Math.floor(Math.random() * 10000)}`,
+        full_name: `Follower ${Math.floor(Math.random() * 10000)}`,
+        is_verified: Math.random() > 0.9,
+        is_private: Math.random() > 0.7,
+        profile_pic_url: `https://via.placeholder.com/50/random?text=F${i + 1}`,
+        follower_count: Math.floor(Math.random() * 10000) + 10,
+        following_count: Math.floor(Math.random() * 1000) + 50,
+        media_count: Math.floor(Math.random() * 500),
+        biography: `Olá! Sou follower ${i + 1} 👋`
+      });
+    }
+    return followers;
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
             🔍 Instagram OSINT Investigator
           </h1>
-          <p className="text-gray-600 text-lg">Investigue perfis do Instagram com dados reais da API</p>
-          <div className="mt-4 flex justify-center space-x-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full pulse-animation"></div>
-            <div className="w-3 h-3 bg-yellow-500 rounded-full pulse-animation" style={{animationDelay: '0.5s'}}></div>
-            <div className="w-3 h-3 bg-green-500 rounded-full pulse-animation" style={{animationDelay: '1s'}}></div>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            Análise avançada de perfis do Instagram com detecção de comentários ofensivos, 
+            análise de engajamento e monitoramento de novos seguidores
+          </p>
+        </div>
+
+        {/* Status do Backend */}
+        <div className="mb-6">
+          <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
+            backendStatus === 'connected' 
+              ? 'bg-green-100 text-green-800' 
+              : backendStatus === 'connecting' 
+                ? 'bg-yellow-100 text-yellow-800' 
+                : 'bg-red-100 text-red-800'
+          }`}>
+            <div className={`w-2 h-2 rounded-full mr-2 ${
+              backendStatus === 'connected' ? 'bg-green-500' : 
+              backendStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'
+            }`}></div>
+            {backendStatus === 'connected' ? '✅ Backend Conectado' : 
+             backendStatus === 'connecting' ? '⏳ Conectando...' : '❌ Backend Desconectado'}
           </div>
         </div>
 
-        {/* Input Form */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-4 sm:p-6 mb-8 card-hover glow-effect">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                👤 Username do Instagram
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Ex: instagram, cristiano, etc."
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300"
-              />
+        {/* Formulário de Análise */}
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6 mb-8">
+          <form onSubmit={investigateProfile} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-white mb-2">
+                  Username do Instagram
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="ex: instagram"
+                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="sessionId" className="block text-sm font-medium text-white mb-2">
+                  Session ID (Opcional)
+                </label>
+                <input
+                  type="text"
+                  id="sessionId"
+                  value={sessionId}
+                  onChange={(e) => setSessionId(e.target.value)}
+                  placeholder="Para dados reais"
+                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-300 mt-1">
+                  Deixe vazio para dados simulados
+                </p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                🔑 Session ID (opcional - para dados reais)
-              </label>
-              <input
-                type="password"
-                value={sessionId}
-                onChange={(e) => setSessionId(e.target.value)}
-                placeholder="Cole o session ID do Instagram"
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300"
-              />
-            </div>
-          </div>
-          <div className="mt-6">
             <button
-              onClick={investigateProfile}
-              disabled={loading || !username}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {loading ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>🔍 Investigando...</span>
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Analisando...
                 </div>
               ) : (
-                <span>🚀 Iniciar Investigação</span>
+                '🔍 Investigar Perfil'
               )}
             </button>
-          </div>
-          <div className="mt-4 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-300 text-yellow-800 rounded-lg">
-            ⚠️ <strong>IMPORTANTE:</strong> Mantenha seu session ID seguro e não compartilhe!
-          </div>
+          </form>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
-          </div>
-        )}
-
-        {/* Results */}
+        {/* Resultados */}
         {results && (
           <div className="space-y-8">
-            {/* Data Source Indicator */}
-            <div className={`rounded-xl p-6 ${results.is_simulated ? 'bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-400' : 'bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-400'} card-hover`}>
-              <div className="flex items-center">
-                {results.is_simulated ? (
-                  <>
-                    <span className="text-yellow-800 text-2xl mr-4">⚠️</span>
-                    <div>
-                      <h3 className="text-yellow-800 font-bold text-lg">Dados Simulados</h3>
-                      <p className="text-yellow-700 text-sm">Para dados reais, inicie o backend Python: <code className="bg-yellow-200 px-2 py-1 rounded">python3 start_backend.py</code></p>
+            {/* Informações Básicas */}
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-3xl font-bold text-white">📊 Resultados da Análise</h2>
+                {results.is_simulated && (
+                  <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                    📋 Dados Simulados
+                  </span>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white/20 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-white">{results.follower_count?.toLocaleString() || 0}</div>
+                  <div className="text-gray-300">Seguidores</div>
+                </div>
+                <div className="bg-white/20 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-white">{results.following_count?.toLocaleString() || 0}</div>
+                  <div className="text-gray-300">Seguindo</div>
+                </div>
+                <div className="bg-white/20 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-white">{results.media_count?.toLocaleString() || 0}</div>
+                  <div className="text-gray-300">Posts</div>
+                </div>
+                <div className="bg-white/20 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-white">{results.engagement_rate?.toFixed(1) || 0}%</div>
+                  <div className="text-gray-300">Engajamento</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white/20 rounded-lg p-4">
+                  <h3 className="text-xl font-bold text-white mb-4">👤 Informações do Perfil</h3>
+                  <div className="space-y-2 text-gray-300">
+                    <div><strong>Nome:</strong> {results.full_name}</div>
+                    <div><strong>ID:</strong> {results.userID}</div>
+                    <div><strong>Verificado:</strong> {results.is_verified ? '✅ Sim' : '❌ Não'}</div>
+                    <div><strong>Privado:</strong> {results.is_private ? '🔒 Sim' : '🌐 Não'}</div>
+                    <div><strong>Business:</strong> {results.is_business ? '💼 Sim' : '👤 Não'}</div>
+                    {results.biography && (
+                      <div><strong>Bio:</strong> {results.biography}</div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="bg-white/20 rounded-lg p-4">
+                  <h3 className="text-xl font-bold text-white mb-4">📈 Métricas de Engajamento</h3>
+                  <div className="space-y-2 text-gray-300">
+                    <div><strong>Média de Likes:</strong> {results.average_likes?.toLocaleString() || 0}</div>
+                    <div><strong>Média de Comentários:</strong> {results.average_comments?.toLocaleString() || 0}</div>
+                    <div><strong>Vídeos IGTV:</strong> {results.total_igtv_videos || 0}</div>
+                    {results.hashtags_used && results.hashtags_used.length > 0 && (
+                      <div>
+                        <strong>Hashtags na Bio:</strong>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {results.hashtags_used.map((tag, index) => (
+                            <span key={index} className="bg-blue-500 text-white px-2 py-1 rounded text-xs">
+                              {tag.tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Posts Recentes */}
+            {results.posts && results.posts.length > 0 && (
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6">
+                <h3 className="text-2xl font-bold text-white mb-6">📸 Posts Recentes</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {results.posts.slice(0, 6).map((post, index) => (
+                    <div key={index} className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-200">
+                      <div className="relative">
+                        <img 
+                          src={post.media_url || `https://via.placeholder.com/300x300/random?text=Post+${index+1}`} 
+                          alt={`Post ${index + 1}`}
+                          className="w-full h-48 object-cover"
+                        />
+                        <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                          #{index + 1}
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <p className="text-gray-800 text-sm mb-3 line-clamp-2">
+                          {post.caption || "Sem legenda"}
+                        </p>
+                        <div className="flex justify-between items-center text-sm text-gray-600">
+                          <span>❤️ {post.likes?.toLocaleString() || 0}</span>
+                          <span>💬 {post.comments?.toLocaleString() || 0}</span>
+                          <span>📅 {post.timestamp ? new Date(post.timestamp * 1000).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                        </div>
+                        {post.permalink && (
+                          <a 
+                            href={post.permalink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="block mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          >
+                            Ver no Instagram →
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-green-800 text-2xl mr-4">✅</span>
-                    <div>
-                      <h3 className="text-green-800 font-bold text-lg">Dados Reais da API do Instagram</h3>
-                      <p className="text-green-700 text-sm">Informações coletadas diretamente do Instagram em tempo real</p>
-                      {results.analysis_timestamp && (
-                        <p className="text-green-600 text-xs mt-1">Análise realizada em: {new Date(results.analysis_timestamp).toLocaleString('pt-BR')}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Análise de Comentários */}
+            {results.comment_analysis && (
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6">
+                <h3 className="text-2xl font-bold text-white mb-6">💬 Análise de Comentários</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="text-center p-4 bg-green-50 rounded-lg transform hover:scale-105 transition-transform duration-200">
+                    <div className="text-2xl font-bold text-green-600">{results.comment_analysis.positive_comments}</div>
+                    <div className="text-sm text-green-700">Positivos</div>
+                  </div>
+                  <div className="text-center p-4 bg-red-50 rounded-lg transform hover:scale-105 transition-transform duration-200">
+                    <div className="text-2xl font-bold text-red-600">{results.comment_analysis.offensive_comments}</div>
+                    <div className="text-sm text-red-700">Ofensivos</div>
+                  </div>
+                  <div className="text-center p-4 bg-blue-50 rounded-lg transform hover:scale-105 transition-transform duration-200">
+                    <div className="text-2xl font-bold text-blue-600">{results.comment_analysis.total_comments}</div>
+                    <div className="text-sm text-blue-700">Total</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded-lg transform hover:scale-105 transition-transform duration-200">
+                    <div className="text-2xl font-bold text-purple-600">{results.comment_analysis.avg_likes_per_comment}</div>
+                    <div className="text-sm text-purple-700">Média Likes</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Comentários com Mais Likes */}
+            {results.top_comments && results.top_comments.length > 0 && (
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6">
+                <h3 className="text-2xl font-bold text-white mb-6">🔥 Comentários com Mais Likes</h3>
+                <div className="space-y-4">
+                  {results.top_comments.slice(0, 10).map((comment, index) => (
+                    <div key={index} className="bg-white rounded-lg p-4 shadow-md transform hover:scale-102 transition-transform duration-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center mb-2">
+                            <span className="text-lg font-bold text-gray-400 mr-2">#{index + 1}</span>
+                            <span className="font-semibold text-gray-900">@{comment.username}</span>
+                            {comment.is_verified && <span className="ml-1 text-blue-500">✓</span>}
+                            <span className="ml-2 text-sm text-gray-500">({comment.user_id})</span>
+                          </div>
+                          <p className="text-gray-800 mb-2">{comment.comment}</p>
+                          <div className="flex items-center space-x-4 text-sm text-gray-600">
+                            <span>❤️ {comment.likes} likes</span>
+                            <span>📅 {comment.timestamp ? new Date(comment.timestamp * 1000).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              comment.sentiment === 'positive' ? 'bg-green-100 text-green-800' :
+                              comment.sentiment === 'negative' ? 'bg-red-100 text-red-800' :
+                              comment.sentiment === 'offensive' ? 'bg-red-200 text-red-900' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {comment.sentiment === 'positive' ? 'Positivo' :
+                               comment.sentiment === 'negative' ? 'Negativo' :
+                               comment.sentiment === 'offensive' ? 'Ofensivo' : 'Neutro'}
+                            </span>
+                          </div>
+                          {comment.post_caption && (
+                            <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-600">
+                              <strong>Post:</strong> {comment.post_caption.substring(0, 100)}...
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Comentários Ofensivos */}
+            {results.offensive_comments && results.offensive_comments.length > 0 && (
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6">
+                <h3 className="text-2xl font-bold text-red-400 mb-6">⚠️ Comentários Ofensivos Detectados</h3>
+                <div className="space-y-4">
+                  {results.offensive_comments.map((comment, index) => (
+                    <div key={index} className="bg-red-50 border border-red-200 rounded-lg p-4 transform hover:scale-102 transition-transform duration-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center mb-2">
+                            <span className="text-red-600 font-bold mr-2">🚨</span>
+                            <span className="font-semibold text-red-900">@{comment.username}</span>
+                            <span className="ml-2 text-sm text-red-600">({comment.user_id})</span>
+                            {comment.is_verified && <span className="ml-1 text-blue-500">✓</span>}
+                          </div>
+                          <p className="text-red-800 mb-2 font-medium">{comment.comment}</p>
+                          <div className="flex items-center space-x-4 text-sm text-red-600">
+                            <span>❤️ {comment.likes} likes</span>
+                            <span>📅 {comment.timestamp ? new Date(comment.timestamp * 1000).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                            <span className="bg-red-200 text-red-900 px-2 py-1 rounded text-xs font-semibold">
+                              OFENSIVO
+                            </span>
+                          </div>
+                          {comment.post_caption && (
+                            <div className="mt-2 p-2 bg-red-100 rounded text-sm text-red-700">
+                              <strong>Post:</strong> {comment.post_caption.substring(0, 100)}...
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Novos Seguidores */}
+            {results.recent_followers && results.recent_followers.length > 0 && (
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6">
+                <h3 className="text-2xl font-bold text-white mb-6">👥 Novos Seguidores (Últimos 10)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {results.recent_followers.map((follower, index) => (
+                    <div key={index} className="bg-white rounded-lg p-4 shadow-md transform hover:scale-105 transition-transform duration-200">
+                      <div className="flex items-center mb-3">
+                        <img 
+                          src={follower.profile_pic_url || `https://via.placeholder.com/50/random?text=${follower.username[0]}`}
+                          alt={follower.username}
+                          className="w-12 h-12 rounded-full mr-3"
+                        />
+                        <div>
+                          <div className="flex items-center">
+                            <span className="font-semibold text-gray-900">@{follower.username}</span>
+                            {follower.is_verified && <span className="ml-1 text-blue-500">✓</span>}
+                            {follower.is_private && <span className="ml-1 text-gray-500">🔒</span>}
+                          </div>
+                          <p className="text-sm text-gray-600">{follower.full_name}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
+                        <div className="text-center">
+                          <div className="font-semibold">{follower.follower_count?.toLocaleString() || 0}</div>
+                          <div>Seguidores</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-semibold">{follower.following_count?.toLocaleString() || 0}</div>
+                          <div>Seguindo</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-semibold">{follower.media_count?.toLocaleString() || 0}</div>
+                          <div>Posts</div>
+                        </div>
+                      </div>
+                      {follower.biography && (
+                        <p className="text-xs text-gray-500 mt-2 line-clamp-2">{follower.biography}</p>
                       )}
                     </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Basic Info Card */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-4 sm:p-6 card-hover">
-              <div className="flex items-center mb-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mr-6">
-                  {results.username.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    {results.full_name}
-                    {results.is_verified && <span className="ml-2 text-blue-500">✓</span>}
-                    {results.is_business && <span className="ml-2 text-purple-500">💼</span>}
-                  </h2>
-                  <p className="text-gray-600 text-lg">@{results.username}</p>
-                  <div className="flex items-center space-x-4 mt-2">
-                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${results.is_private ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                      {results.is_private ? '🔒 Privado' : '🌐 Público'}
-                    </span>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
-                      ID: {results.userID}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-                  <div className="text-3xl font-bold text-blue-600 mb-1">
-                    {results.follower_count.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-blue-700">👥 Seguidores</div>
-                </div>
-                <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
-                  <div className="text-3xl font-bold text-green-600 mb-1">
-                    {results.following_count.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-green-700">👤 Seguindo</div>
-                </div>
-                <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
-                  <div className="text-3xl font-bold text-purple-600 mb-1">
-                    {results.media_count.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-purple-700">📸 Posts</div>
-                </div>
-                <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
-                  <div className="text-3xl font-bold text-orange-600 mb-1">
-                    {results.total_igtv_videos.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-orange-700">📺 IGTV</div>
-                </div>
-              </div>
-
-              {results.biography && (
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-semibold text-gray-800 mb-2">📝 Biografia</h3>
-                  <p className="text-gray-700">{results.biography}</p>
-                </div>
-              )}
-
-              {results.external_url && (
-                <div className="mb-6">
-                  <h3 className="font-semibold text-gray-800 mb-2">🔗 Link Externo</h3>
-                  <a href={results.external_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">
-                    {results.external_url}
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* Metrics Card */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-4 sm:p-6 card-hover">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">📊 Métricas de Engajamento</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center p-6 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl">
-                  <div className="text-4xl font-bold text-indigo-600 mb-2">
-                    {results.engagement_rate}%
-                  </div>
-                  <div className="text-sm text-indigo-700 font-semibold">Taxa de Engajamento</div>
-                  <div className="w-full bg-indigo-200 rounded-full h-2 mt-3">
-                    <div 
-                      className="bg-indigo-600 h-2 rounded-full transition-all duration-1000 ease-out"
-                      style={{ width: `${Math.min(results.engagement_rate, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="text-center p-6 bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl">
-                  <div className="text-4xl font-bold text-pink-600 mb-2">
-                    {results.average_likes.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-pink-700 font-semibold">Média de Curtidas</div>
-                  <div className="text-xs text-pink-600 mt-1">por post</div>
-                </div>
-                <div className="text-center p-6 bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl">
-                  <div className="text-4xl font-bold text-teal-600 mb-2">
-                    {results.average_comments.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-teal-700 font-semibold">Média de Comentários</div>
-                  <div className="text-xs text-teal-600 mt-1">por post</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Engagement Chart */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6 card-hover">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">📈 Engajamento ao Longo do Tempo</h3>
-                <div className="h-64">
-                  <Line
-                    data={{
-                      labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-                      datasets: [{
-                        label: 'Seguidores',
-                        data: [
-                          results.follower_count * 0.8,
-                          results.follower_count * 0.85,
-                          results.follower_count * 0.9,
-                          results.follower_count * 0.95,
-                          results.follower_count * 0.98,
-                          results.follower_count
-                        ],
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                      }]
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          display: false
-                        }
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                          }
-                        },
-                        x: {
-                          grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                          }
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Post Type Distribution */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6 card-hover">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">📊 Distribuição de Posts</h3>
-                <div className="h-64">
-                  <Doughnut
-                    data={{
-                      labels: ['Imagens', 'Vídeos', 'Carrosséis', 'IGTV'],
-                      datasets: [{
-                        data: [
-                          results.media_count * 0.6,
-                          results.media_count * 0.25,
-                          results.media_count * 0.1,
-                          results.total_igtv_videos
-                        ],
-                        backgroundColor: [
-                          'rgba(59, 130, 246, 0.8)',
-                          'rgba(236, 72, 153, 0.8)',
-                          'rgba(16, 185, 129, 0.8)',
-                          'rgba(245, 158, 11, 0.8)'
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                      }]
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'bottom'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Last Post and Comments */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Last Post */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6 card-hover">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">📸 Último Post</h3>
-                {results.last_post ? (
-                  <div className="space-y-4">
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg">
-                      <p className="text-gray-800 mb-3">{results.last_post.caption}</p>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-purple-600">❤️ {results.last_post.likes.toLocaleString()}</span>
-                        <span className="text-pink-600">💬 {results.last_post.comments.toLocaleString()}</span>
-                        <span className="text-gray-500">
-                          {results.last_post.timestamp ? new Date(results.last_post.timestamp).toLocaleDateString('pt-BR') : 'N/A'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <div className="text-4xl mb-2">📭</div>
-                    <p>Nenhum post encontrado</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Recent Comments */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6 card-hover">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">💬 Comentários Recentes</h3>
-                {results.recent_comments && results.recent_comments.length > 0 ? (
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {results.recent_comments.map((comment, index) => (
-                      <div key={index} className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border-l-4 border-blue-400">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-semibold text-blue-800">@{comment.username}</span>
-                          <span className="text-xs text-gray-500">
-                            {comment.timestamp ? new Date(comment.timestamp).toLocaleDateString('pt-BR') : 'N/A'}
-                          </span>
-                        </div>
-                        <p className="text-gray-700 text-sm">{comment.comment}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <div className="text-4xl mb-2">💭</div>
-                    <p>Nenhum comentário encontrado</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Contact Information */}
-            {(results.public_email || results.public_phone_number || results.obfuscated_email || results.obfuscated_phone) && (
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-8 card-hover">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">📞 Informações de Contato</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {results.public_email && (
-                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                      <div className="flex items-center mb-2">
-                        <span className="text-green-600 mr-2">📧</span>
-                        <span className="font-semibold text-green-800">Email Público</span>
-                      </div>
-                      <p className="text-green-700">{results.public_email}</p>
-                    </div>
-                  )}
-                  {results.public_phone_number && (
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center mb-2">
-                        <span className="text-blue-600 mr-2">📱</span>
-                        <span className="font-semibold text-blue-800">Telefone Público</span>
-                      </div>
-                      <p className="text-blue-700">{results.public_phone_number}</p>
-                    </div>
-                  )}
-                  {results.obfuscated_email && (
-                    <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-                      <div className="flex items-center mb-2">
-                        <span className="text-yellow-600 mr-2">🔒</span>
-                        <span className="font-semibold text-yellow-800">Email Ofuscado</span>
-                      </div>
-                      <p className="text-yellow-700">{results.obfuscated_email}</p>
-                    </div>
-                  )}
-                  {results.obfuscated_phone && (
-                    <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
-                      <div className="flex items-center mb-2">
-                        <span className="text-purple-600 mr-2">🔒</span>
-                        <span className="font-semibold text-purple-800">Telefone Ofuscado</span>
-                      </div>
-                      <p className="text-purple-700">{results.obfuscated_phone}</p>
-                    </div>
-                  )}
+                  ))}
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* Tutorial */}
-        <div className="bg-white rounded-lg shadow-md p-6 mt-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">📋 Como obter o Session ID</h2>
-          <div className="space-y-4 text-gray-700">
-            <div className="flex items-start space-x-3">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">1</span>
-              <p>Abra o Instagram no navegador e faça login</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">2</span>
-              <p>Pressione F12 para abrir as ferramentas de desenvolvedor</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">3</span>
-              <p>Vá na aba "Application" ou "Aplicação"</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">4</span>
-              <p>No menu lateral, clique em "Cookies" → "https://www.instagram.com"</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">5</span>
-              <p>Procure por "sessionid" e copie o valor</p>
-            </div>
-            <div className="mt-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded">
-              ⚠️ <strong>IMPORTANTE:</strong> Mantenha seu session ID seguro e não compartilhe!
+        {/* Instruções */}
+        {!results && (
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl p-6 text-center">
+            <h3 className="text-2xl font-bold text-white mb-4">🚀 Como Usar</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+              <div className="bg-white/20 rounded-lg p-4">
+                <h4 className="text-lg font-bold text-white mb-2">📋 Dados Simulados</h4>
+                <p className="text-gray-300 text-sm">
+                  Deixe o campo Session ID vazio para testar com dados simulados. 
+                  Você verá posts, comentários e seguidores fictícios para demonstrar as funcionalidades.
+                </p>
+              </div>
+              <div className="bg-white/20 rounded-lg p-4">
+                <h4 className="text-lg font-bold text-white mb-2">🔐 Dados Reais</h4>
+                <p className="text-gray-300 text-sm">
+                  Para dados reais, você precisa de um Session ID válido do Instagram. 
+                  Consulte o guia para obter o seu Session ID.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default InstagramInvestigator; 
+export default InstagramInvestigator;

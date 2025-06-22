@@ -1,11 +1,18 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-// @ts-ignore
-import EXIF from "exif-js";
+import L from 'leaflet';
 
 const DEFAULT_CENTER = [-15.77972, -47.92972];
 const DEFAULT_ZOOM = 4.5;
+
+// Fix for default markers in react-leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
 
 function ChangeMapView({ coords }) {
   const map = useMap();
@@ -19,14 +26,12 @@ const GeoMap = () => {
   const [search, setSearch] = useState("");
   const [coords, setCoords] = useState(null);
   const [photoData, setPhotoData] = useState(null);
-  const [error, setError] = useState("");
   const [progress, setProgress] = useState(0);
   const [analyzing, setAnalyzing] = useState(false);
 
   // Busca localidade pelo nome
   const handleSearch = async (e) => {
     e.preventDefault();
-    setError("");
     if (!search) return;
     try {
       const resp = await fetch(
@@ -35,17 +40,14 @@ const GeoMap = () => {
       const data = await resp.json();
       if (data && data.length > 0) {
         setCoords([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
-      } else {
-        setError("Local não encontrado.");
       }
     } catch (err) {
-      setError("Erro ao buscar local.");
+      console.error("Erro ao buscar local.", err);
     }
   };
 
   // Extrai EXIF da foto e faz análise profunda via backend
   const handlePhoto = async (e) => {
-    setError("");
     setPhotoData(null);
     setCoords(null);
     setProgress(0);
@@ -85,7 +87,7 @@ const GeoMap = () => {
       setProgress(100);
       setTimeout(() => setAnalyzing(false), 400);
     } catch (err) {
-      setError("Erro ao analisar imagem: " + err.message);
+      console.error("Erro ao analisar imagem: ", err.message);
       setAnalyzing(false);
     } finally {
       clearInterval(interval);
