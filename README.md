@@ -119,9 +119,6 @@ O frontend estará disponível em `http://localhost:3000`
 
 ## 🖼️ Screenshots
 
-### Dashboard Principal
-![Dashboard Principal](screenshots/Screenshot%202025-06-21%20at%202.58.34%E2%80%AFAM.png)
-
 ### Investigação Instagram OSINT
 ![Instagram OSINT](screenshots/Screenshot%202025-06-22%20at%201.18.08%E2%80%AFAM.png)
 
@@ -140,8 +137,8 @@ O frontend estará disponível em `http://localhost:3000`
 ### Exportação de Relatórios
 ![Exportação de Relatórios](screenshots/Screenshot%202025-06-22%20at%202.22.08%E2%80%AFAM.png)
 
-### Gráficos de Engajamento
-![Gráficos de Engajamento](screenshots/Screenshot%202025-06-22%20at%202.35.07%E2%80%AFAM.png)
+### Painel de Atividades
+![Painel de Atividades](screenshots/Screenshot%202025-06-22%20at%202.35.07%E2%80%AFAM.png)
 
 ## 📁 Estrutura do Projeto
 
